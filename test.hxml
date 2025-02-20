@@ -1,0 +1,10 @@
+-cp com
+-lib pasta-physic
+-lib buddy
+-lib utest
+-lib uuid
+-lib haxe-strings
+-lib logger
+-hl out/hl/tltest.hl
+-main TLTest
+-debug

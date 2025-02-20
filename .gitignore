@@ -1,0 +1,6 @@
+
+.vscode/settings.json
+
+out/
+test_project/
+*.dot
