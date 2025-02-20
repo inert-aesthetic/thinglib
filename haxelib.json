@@ -2,7 +2,7 @@
     "name": "thinglib",
     "url" : "https://github.com/inert-aesthetic/thinglib",
     "license": "MIT",
-    "tags": ["physics"],
+    "tags": ["data"],
     "description": "Backend for thingmaker.",
     "version": "0.0.1",
     "classPath": "com/",
