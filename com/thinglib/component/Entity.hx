@@ -535,7 +535,7 @@ class Entity extends Thing{
             new_child.skipSerialization=true;
             this.addChild(new_child);
         }
-        var all_children = this.getChildrenRecursive();
+        var all_children = this.getChildrenRecursive(true);
         for(overr in new_overrides??[]){
             var def:PropertyDef = getRoot().getThing(PROPERTYDEF, overr.def_guid);
             if(def==null){
@@ -690,10 +690,12 @@ class Entity extends Thing{
     }
 
     public function replaceChild(old_child:Entity, new_child:Entity):Bool{
-        if(!children.contains(old_child)){
+        if(!children.exists(c->c.isEqualTo(old_child))){
+            Util.log.error('$old_child not a child of $this to replace with $new_child.');
             return false;
         }
         var pos = children.indexOf(old_child);
+        children.remove(children.find(c->c.isEqualTo(old_child)));
         return addChildAt(new_child, pos);
     }
 
