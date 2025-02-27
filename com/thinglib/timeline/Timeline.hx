@@ -1,5 +1,9 @@
 package thinglib.timeline;
 
+import thinglib.storage.Reference;
+import thinglib.storage.Dependency;
+import uuid.Uuid;
+import thinglib.storage.Reference.IHasReference;
 import thinglib.property.PropertyDef;
 import thinglib.storage.StorageTypes.SerializedPropertyValue;
 import thinglib.Util.ThingID;
@@ -7,31 +11,41 @@ import thinglib.property.Property;
 import thinglib.component.Entity;
 using Lambda;
 
-class Timeline{
+class Timeline extends Thing{
     public var states(default, null):Array<TimelineState>;
-    public var owner:ThingID;
     public var defaultState(get, set):TimelineState;
     var _defaultState:String="Default";
-    public function new(owner){
-        this.owner=owner;
+    public function new(parent:IHasReference, name:String="", guid:String=null){
+        this.name = name;
+        this.extension = Consts.FILENAME_TIMELINE;
+        this.guid=guid??Uuid.short();
+        super(TIMELINE, parent);
     }
-    public function serialize():SerializedTimeline{
-        var ret:SerializedTimeline = {owner:owner, states: states?.map(s->s?.serialize())};
+    override public function serialize(isRoot:Bool=true, ?ancestorDependencies:Array<Dependency>):SerializedTimeline{
+        var ret:SerializedTimeline = {name:name, guid:guid, states: states?.map(s->s?.serialize())};
         if(_defaultState!="Default"){
             ret.defaultState=_defaultState;
         }
         return ret;
     }
-    public static function FromSerialized(data:SerializedTimeline):Timeline{
-        var ret = new Timeline(data.owner);
-        ret.states = data.states?.map(s->TimelineState.FromSerialized(ret, s));
+    public static function FromSerialized(parent:IHasReference, data:SerializedTimeline):Timeline{
+        
+        var ret = new Timeline(null, null, Reference.SKIP_REGISTRATION);
+        ret.loadFromSerialized(parent, data);
+        return ret;
+    }
+    override public function loadFromSerialized(parent:IHasReference, raw:Dynamic, ?id_prefix:String):Void{
+        var data:SerializedTimeline = raw;
+        this.name = data.name;
+        this.guid = data.guid;
+        setReference(TIMELINE(this), parent);
+        states = data.states?.map(s->TimelineState.FromSerialized(this, s));
         if(data.defaultState!=null){
-            ret._defaultState=data.defaultState;
+            _defaultState=data.defaultState;
         }
         else{
-            ret._defaultState="Default";
+            _defaultState="Default";
         }
-        return ret;
     }
     function get_defaultState(){
         for(s in states){
@@ -70,8 +84,8 @@ class Timeline{
         }
         return ret;
     }
-    public static function Create(owner:Entity){
-        var ret = new Timeline(owner.guid);
+    public static function Create(parent:Entity, ?name:String){
+        var ret = new Timeline(parent, name??(parent.name+'_'+Uuid.short().substr(0, 4)));
         ret.defaultState = ret.addState("Default", 60);
         return ret;
     }
@@ -266,7 +280,8 @@ typedef TimelineIndexedKeyframe={
 }
 
 typedef SerializedTimeline={
-    owner:ThingID,
+    name:String,
+    guid:String,
     states:Array<SerializedTimelineState>,
     ?defaultState:String
 }

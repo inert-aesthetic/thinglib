@@ -16,7 +16,7 @@ typedef SerializedDependency = {
 
 //Construct storage
 typedef SerializedEntity = {
-    ?timeline:SerializedTimeline,
+    ?timeline:ThingID,
     ?dependencies:Array<SerializedDependency>,
     ?name:String, 
     ?properties:Array<SerializedProperty>, 

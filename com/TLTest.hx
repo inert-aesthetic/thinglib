@@ -97,13 +97,15 @@ class TLTest extends SingleSuite{
             
             
             nested_marker.addComponent(root.unsafeGet(CoreComponent.TIMELINE_CONTROL));
-            var timeline=Timeline.Create(nested_marker);
+            var timeline=Timeline.Create(nested_marker, "timeline_test");
             var state=timeline.getState("Default");
             var track = state.addTrack(CoreComponentPosition.x_def);
             track.addKeyframe(10, FLOAT(15), LINEAR);
             track.addKeyframe(20, FLOAT(25), LINEAR);
             
             nested_marker.timeline=timeline;
+
+            storage.save(timeline.filename, timeline);
 
             storage.save(nested_marker.filename, nested_marker);
             

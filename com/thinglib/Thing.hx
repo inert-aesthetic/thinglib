@@ -27,6 +27,7 @@ class Thing implements IHasReference{
             case ENTITY:ENTITY(cast this);
             case PROPERTYDEF:PROPERTYDEF(cast this);
             case COMPONENT:COMPONENT(cast this);
+            case TIMELINE: TIMELINE(cast this);
             case ROOT:ROOT(cast this);
             default:null;
         }, parent);

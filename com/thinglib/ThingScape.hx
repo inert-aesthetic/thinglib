@@ -1,5 +1,6 @@
 package thinglib;
 
+import thinglib.timeline.Timeline;
 import uuid.Uuid;
 import thinglib.Util.ThingID;
 import thinglib.property.Component;
@@ -42,6 +43,7 @@ class ThingScape extends Thing{
             case ENTITY: ENTITY(cast thing);
             case PROPERTYDEF: PROPERTYDEF(cast thing);
             case COMPONENT: COMPONENT(cast thing);
+            case TIMELINE: TIMELINE(cast thing);
             case ROOT: null;
             case UNKNOWN: null;
         });
@@ -58,6 +60,7 @@ class ThingScape extends Thing{
             var target = switch dependency.type {
                 case ENTITY: new Entity(this, null, null, Reference.SKIP_REGISTRATION);
                 case COMPONENT: new Component(this, null, Reference.SKIP_REGISTRATION);
+                case TIMELINE: new Timeline(this, null, Reference.SKIP_REGISTRATION);
                 default: null;
             }
             if(target==null){
@@ -80,6 +83,7 @@ class ThingScape extends Thing{
             case ENTITY(v): v;
             case PROPERTYDEF(v): v;
             case COMPONENT(v): v;
+            case TIMELINE(v): v;
             case ROOT(v): v;
         };
     }
@@ -99,6 +103,7 @@ class ThingScape extends Thing{
                 case ENTITY(v): v;
                 case PROPERTYDEF(v): v;
                 case COMPONENT(v): v;
+                case TIMELINE(v): v;
                 case ROOT(v): v;
             };
         }
@@ -114,6 +119,7 @@ class ThingScape extends Thing{
                     case ENTITY(v):v;
                     case PROPERTYDEF(v):v;
                     case COMPONENT(v):v;
+                    case TIMELINE(v):v;
                     case ROOT(v):v;
                 };
                 var c = Type.getClass(dyn);
@@ -128,6 +134,7 @@ class ThingScape extends Thing{
             case ENTITY(v): v;
             case PROPERTYDEF(v): v;
             case COMPONENT(v): v;
+            case TIMELINE(v): v;
             case ROOT(v): v;
         });
     }

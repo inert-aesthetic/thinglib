@@ -389,8 +389,8 @@ class Entity extends Thing{
                 ret.components = comp;
             }
         }
-        if(timeline!=null&&timeline.owner==this.guid){
-            ret.timeline=timeline.serialize();
+        if(timeline!=null){
+            ret.timeline=timeline.guid;
         }
         var ret_child_registry=(!wasRoot||instanceOf==null)?null:relevant_children.map(e->{return {child:e.guid, parent:e.parent.guid, index:e.parent.getIndexOfChild(e)}});
         if(ret_child_registry?.length>0){
@@ -506,7 +506,7 @@ class Entity extends Thing{
         //   }
         }
         if(d.timeline!=null){
-            this.timeline=Timeline.FromSerialized(d.timeline);
+            this.timeline=root.getThing(TIMELINE, d.timeline);
         }
         //calculateDependencies();
     }
@@ -832,6 +832,9 @@ class Entity extends Thing{
                     dependencies.push(d);
                 }
             }
+        }
+        if(timeline!=null){
+            timeline.assertDependency(dependencies);
         }
     }
 }

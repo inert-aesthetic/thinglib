@@ -1,5 +1,6 @@
 package thinglib.storage;
 
+import thinglib.timeline.Timeline;
 import thinglib.Util.ThingID;
 import thinglib.ThingScape;
 import thinglib.property.Component;
@@ -43,6 +44,7 @@ class Reference implements IHasReference{
                 case ENTITY(v):v.guid;
                 case PROPERTYDEF(v):v.guid;
                 case COMPONENT(v):v.guid;
+                case TIMELINE(v):v.guid;
                 case ROOT(v):v.guid;
             }
             if(parents.contains(thingid)){
@@ -53,6 +55,7 @@ class Reference implements IHasReference{
                         case ENTITY(v):v.name;
                         case PROPERTYDEF(v):v.name;
                         case COMPONENT(v):v.name;
+                        case TIMELINE(v):v.name;
                         case ROOT(v):v.name;
                     }
                     chain+='$name->';
@@ -75,6 +78,7 @@ class Reference implements IHasReference{
             case ENTITY(v): return cast v;
             case PROPERTYDEF(v): return cast v;
             case COMPONENT(v): return cast v;
+            case TIMELINE(v): return cast v;
             case ROOT(v): return cast v;
         }
     }
@@ -108,6 +112,7 @@ class Reference implements IHasReference{
             case ENTITY(v):v.guid;
             case PROPERTYDEF(v): v.guid;
             case COMPONENT(v): v.guid;
+            case TIMELINE(v):v.guid;
             case ROOT(v):"root";
         };
     }
@@ -122,6 +127,7 @@ enum abstract ReferenceType(String) from String to String{
     var PROPERTYDEF;
     var COMPONENT;
     var ROOT;
+    var TIMELINE;
     var UNKNOWN;
 
     @:from
@@ -140,7 +146,7 @@ enum abstract ReferenceType(String) from String to String{
     }
 
     public static function createAll():Array<ReferenceType>{
-        return [ENTITY, PROPERTYDEF, COMPONENT, ROOT];
+        return [ENTITY, PROPERTYDEF, COMPONENT, TIMELINE, ROOT];
     }
 }
 enum ReferenceValue{
@@ -148,4 +154,5 @@ enum ReferenceValue{
     PROPERTYDEF(v:PropertyDef);
     COMPONENT(v:Component);
     ROOT(v:ThingScape);
+    TIMELINE(v:Timeline);
 }
