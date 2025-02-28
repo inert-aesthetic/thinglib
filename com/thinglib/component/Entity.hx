@@ -389,7 +389,8 @@ class Entity extends Thing{
                 ret.components = comp;
             }
         }
-        if(timeline!=null){
+        //Don't serialized timeline if it comes from prefab base
+        if(timeline!=null&&(instanceOf==null||instanceOf.timeline?.isEqualTo(timeline))){
             ret.timeline=timeline.guid;
         }
         var ret_child_registry=(!wasRoot||instanceOf==null)?null:relevant_children.map(e->{return {child:e.guid, parent:e.parent.guid, index:e.parent.getIndexOfChild(e)}});
@@ -495,20 +496,10 @@ class Entity extends Thing{
                 overrides.push(Override.FromSerialized(o));
             }
             instantiate(prefab, [], d.child_registry);
-            // var allChildren = this.getChildrenRecursive();
-        //     for(o in overrides){
-        //         var def:PropertyDef = root.getThing(PROPERTYDEF, o.def_guid);
-        //         var targetid:ThingID = [this, {guid:o.parent_guid}];
-        //         var par:Entity = o.parent_guid==Reference.THIS?this:allChildren.find(f->{
-        //             return f.guid==targetid;
-        //         });
-        //         // par.getPropByDef(def).overrideTarget = o;
-        //   }
         }
         if(d.timeline!=null){
             this.timeline=root.getThing(TIMELINE, d.timeline);
         }
-        //calculateDependencies();
     }
 
     function instantiate(prefab:Entity, ?new_overrides:Array<Override>, ?new_children:Array<ChildRegistryEntry>){
