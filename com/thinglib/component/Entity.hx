@@ -390,7 +390,7 @@ class Entity extends Thing{
             }
         }
         //Don't serialized timeline if it comes from prefab base
-        if(timeline!=null&&(instanceOf==null||instanceOf.timeline?.isEqualTo(timeline))){
+        if(timeline!=null&&(instanceOf==null||!instanceOf.timeline?.isEqualTo(timeline))){
             ret.timeline=timeline.guid;
         }
         var ret_child_registry=(!wasRoot||instanceOf==null)?null:relevant_children.map(e->{return {child:e.guid, parent:e.parent.guid, index:e.parent.getIndexOfChild(e)}});
@@ -504,7 +504,7 @@ class Entity extends Thing{
 
     function instantiate(prefab:Entity, ?new_overrides:Array<Override>, ?new_children:Array<ChildRegistryEntry>){
         if(prefab==null){
-            Util.log.error('Failed to instantiate ${this} due to unresolvable reference!');
+            Util.log.error('Failed to instantiate $this due to unresolvable reference!');
             return;
         }
         this.instanceOf=prefab;
