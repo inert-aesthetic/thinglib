@@ -393,7 +393,7 @@ class Entity extends Thing{
         if(timeline!=null&&(instanceOf==null||!instanceOf.timeline?.isEqualTo(timeline))){
             ret.timeline=timeline.guid;
         }
-        var ret_child_registry=(!wasRoot||instanceOf==null)?null:relevant_children.map(e->{return {child:e.guid, parent:e.parent.guid, index:e.parent.getIndexOfChild(e)}});
+        var ret_child_registry=(!wasRoot||instanceOf==null)?null:relevant_children.map(e->{return {child:e.guid, parent:e.parent.guid.toRelative(this), index:e.parent.getIndexOfChild(e)}});
         if(ret_child_registry?.length>0){
             ret.child_registry=ret_child_registry;
         }
@@ -502,6 +502,13 @@ class Entity extends Thing{
         }
     }
 
+    public function destroy(){
+        for(c in children){
+            c.destroy();
+        }
+        getRoot().removeThing(this);
+    }
+
     function instantiate(prefab:Entity, ?new_overrides:Array<Override>, ?new_children:Array<ChildRegistryEntry>){
         if(prefab==null){
             Util.log.error('Failed to instantiate $this due to unresolvable reference!');
@@ -524,7 +531,10 @@ class Entity extends Thing{
             new_child.loadFromSerialized(this, child.serialize(), this.guid);
 
             new_child.skipSerialization=true;
-            this.addChild(new_child);
+            var res = this.addChild(new_child);
+            if(!res){
+                Util.log.error('Failed to reparent $new_child from $prefab onto $this!');
+            }
         }
         var all_children = this.getChildrenRecursive(true);
         for(overr in new_overrides??[]){
@@ -588,8 +598,8 @@ class Entity extends Thing{
         }
         if(new_children!=null){
             for(nc in new_children){
-                var tc = this.children.find(c->c.guid==nc.child);
-                var p:Entity = this.reference.getRoot().getThing(ENTITY, nc.parent);
+                var tc = this.children.find(c->c.guid.unInstancedID==nc.child);
+                var p:Entity = this.reference.getRoot().getThing(ENTITY, nc.parent.resolveThis(this));
                 if(tc!=null&&p!=null){
                     this.removeChild(tc);
                     var res = p.addChildAt(tc, nc.index);
@@ -616,8 +626,8 @@ class Entity extends Thing{
             }
         }
         else if(this.children_base_component!=null){
-            if(child.getBaseComponent()?.guid!=children_base_component.guid){
-                Util.log.verbose('Want to add $child to $this but parent is constrained to children with base prop $children_base_component');
+            if(!child.hasComponentByGUID(this.children_base_component.guid)){
+                Util.log.verbose('Want to add $child to $this but parent is constrained to children with component $children_base_component');
                 return false;
             }
         }

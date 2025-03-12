@@ -11,6 +11,7 @@ import thinglib.property.core.CoreComponents;
 import pasta.Vect;
 using thinglib.component.util.EntityTools;
 using Lambda;
+using StringTools;
 #if !js
 import sys.FileSystem;
 #end
@@ -208,6 +209,19 @@ abstract ThingID(String) from String to String{
             return res[res.length-2];
         }
         return Reference.EMPTY_ID;
+    }
+
+    public function resolveThis(to:ThingID){
+        return this.replace(Reference.THIS, to);
+    }
+
+    public function toRelative(relative_root:ThingID){
+        return this.replace(relative_root, Reference.THIS);
+    }
+
+    @:from
+    static function fromThing(thing:Thing):ThingID{
+        return thing.guid;
     }
 
     @:from
