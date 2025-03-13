@@ -1,5 +1,6 @@
 package thinglib.property;
 
+import thinglib.Util.ThingID;
 import thinglib.storage.Dependency;
 import thinglib.storage.Reference;
 import thinglib.storage.StorageTypes.SerializedPropertyValue;
@@ -21,7 +22,7 @@ class PropertyDef extends Thing{
     public var minimum_value:PropertyValue;
     public var options:Array<String>;
     public var step_size:PropertyValue;
-    public var ref_base_type_guid:String;
+    public var ref_base_type_guid:ThingID;
     public var extra_data:String;
     public var documentation:String;
     public var full_name(get, never):String;
@@ -38,20 +39,23 @@ class PropertyDef extends Thing{
     }
 
     override public function serialize(isRoot:Bool=true, ?ancestorDependencies:Array<Dependency>):SerializedPropertyDef{
-        return {
+        var ret:SerializedPropertyDef = {
             name: name,
             guid: guid,
             default_value:SerializeValue(default_value),
             min: SerializeValue(minimum_value),
             max: SerializeValue(maximum_value),
             step: SerializeValue(step_size),
-            ref_base_type: ref_base_type_guid,
             type: type,
             extra: extra_data,
             documentation: documentation,
             options: options,
             timeline_controllable: timeline_controllable
         };
+        if(ref_base_type_guid != Reference.EMPTY_ID){
+            ret.ref_base_type = ref_base_type_guid;
+        }
+        return ret;
     }
 
     inline function get_full_name():String{
@@ -220,7 +224,7 @@ class PropertyDef extends Thing{
         this.extra_data = p.extra;
         this.documentation = p.documentation;
         this.options = p.options;
-        this.ref_base_type_guid = p.ref_base_type;
+        this.ref_base_type_guid = p.ref_base_type??Reference.EMPTY_ID;
         this.timeline_controllable = p.timeline_controllable??true;
         setReference(PROPERTYDEF(this), parent);
         if(id_prefix!=null){

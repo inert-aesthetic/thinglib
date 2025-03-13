@@ -405,6 +405,31 @@ class Entity extends Thing{
         return new_entity;
     }
 
+    public static function clone(instance:Entity, base:Entity){
+        return instance.copy(base.guid);
+    }
+
+    public function copy(prefix:ThingID):Entity{
+        var n = new Entity(getRoot(), this.name, [], [{guid:prefix}, this]);
+        n.children_base_component=this.children_base_component;
+        n.children_base_entity=this.children_base_entity;
+        n.instanceOf=this.instanceOf;
+        if(this.instanceOf!=null){
+            n.isFromInstance=true;
+        }
+        for(c in this.components){
+            n.addComponent(c);
+        }
+        for(key=>value in this.property_values){
+            n.setValue(getRoot().unsafeGet(key), value);
+        }
+        n.timeline=this.timeline;
+        for(c in this.children){
+            n.addChild(c.copy(prefix));
+        }
+        return this;
+    }
+
     function get_timeline(){
         if(this.timeline!=null) return this.timeline;
         if(instanceOf!=null){
@@ -599,7 +624,7 @@ class Entity extends Thing{
         if(new_children!=null){
             for(nc in new_children){
                 var tc = this.children.find(c->c.guid.unInstancedID==nc.child);
-                var p:Entity = this.reference.getRoot().getThing(ENTITY, nc.parent.resolveThis(this));
+                var p:Entity = all_children.find(c->c.guid==nc.parent.resolveThis(this)||c.guid.unInstancedID==nc.parent);//this.reference.getRoot().getThing(ENTITY, nc.parent.resolveThis(this));
                 if(tc!=null&&p!=null){
                     this.removeChild(tc);
                     var res = p.addChildAt(tc, nc.index);

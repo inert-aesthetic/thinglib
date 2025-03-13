@@ -124,7 +124,9 @@ class CoreComponentEdge extends Component{
         var a = a_def = new PropertyDef(this, "a", REF, A);
         var b = b_def = new PropertyDef(this, "b", REF, B);
         a.default_value=REF(Reference.EMPTY_ID);
+        a.ref_base_type_guid = CoreComponent.NODE;
         b.default_value=REF(Reference.EMPTY_ID);
+        b.ref_base_type_guid = CoreComponent.NODE;
         this.definitions=[
             a, b
         ];
