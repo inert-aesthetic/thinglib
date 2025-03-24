@@ -1,5 +1,7 @@
 package thinglib.macro;
 
+import thinglib.Thing;
+import thinglib.storage.Reference;
 import haxe.macro.Compiler;
 import haxe.macro.ExprTools;
 import haxe.macro.ComplexTypeTools;
@@ -26,7 +28,7 @@ using haxe.macro.TypeTools;
 using haxe.macro.ComplexTypeTools;
 
 class Codegen{
-    static var cglog = new Logger('codegen', INFO);
+    static var cglog = new Logger('codegen', VERBOSE);
 #if (macro||interp||eval)
     static var root:ThingScape;
     static var storage:Storage;
@@ -36,6 +38,8 @@ class Codegen{
     @:persistent static var component_registry_lookup:Map<String, ThingID> = [];
     @:persistent static var construct_registry_lookup:Map<String, ThingID> = [];
     static var construct_build_order:Array<ThingID> =[];
+    
+    static final abstractOverEntity = TDAbstract(macro:thinglib.component.Entity, null, null, [macro: thinglib.component.Entity]);
 
     public static function setupMetadatas(){
         // Compiler.registerCustomMetadata({
@@ -66,9 +70,11 @@ class Codegen{
 
             var construct_names = Util.getAllOfTypeInDirectory(Consts.FILENAME_CONSTRUCT, path);
             var constructs:Array<Entity> = [];
+            
             for(c in construct_names){
                 var meta:StorageMeta = storage.loadMeta(c);
                 if(root.hasThing(meta.guid)){
+                    constructs.push(root.unsafeGet(meta.guid));
                     continue;
                 }
                 constructs.push(storage.createFromFile(Entity, root, c));
@@ -107,7 +113,7 @@ class Codegen{
                                 switch d.type {
                                     default:
                                     case SELECT, MULTI:
-                                        generatePropertyEnum(d.options, d.name);
+                                        generatePropertyEnum(d.options, makeTypeName('${c.name}_${d.name}'));
                                 }
                                 for(f in generatePropertyAccessorFields(d)){
                                     fields.push(f);
@@ -118,12 +124,13 @@ class Codegen{
                                 name:makeTypeName(c.name),
                                 pack:[],//['things'],
                                 doc:c.guid,
-                                kind:TDAbstract(macro:thinglib.component.Entity),
+                                kind:abstractOverEntity,
                                 fields:fields,
+                                meta:[{name:':forward', params: [macro name, macro parent, macro removeChild], pos:Context.currentPos()}]
                             };
                             component_types.set(c.guid, def);
+                            cglog.verbose(new Printer().printTypeDefinition(def));
                     }
-                    //cglog.log(new Printer().printTypeDefinition(def));
                 }
                 Context.defineModule('things.Components', component_types.array().concat(property_enum_types), null, [{
                     pack: ['thinglib','component','util'],
@@ -191,12 +198,15 @@ class Codegen{
                 cglog.info("Building registry.");
                 var construct_registry_fields:Array<Field> = [];
                 for(construct in constructs){
+                    var construct_type_name = makeTypeName(construct.name);
                     construct_registry_fields.push({
-                        name: makeTypeName(construct.name),
+                        name: construct_type_name,
                         kind: FVar(null, macro $v{construct.guid}),
                         pos: Context.currentPos()
                     });
-                    construct_registry_lookup.set(makeTypeName(construct.name), construct.guid);
+                
+                    construct_registry_lookup.set(construct_type_name, construct.guid);
+
                 }
                 
                 var construct_registry:TypeDefinition = {
@@ -473,16 +483,25 @@ class Codegen{
                 ret:null
             })
         });
+        fields.push({
+            pos:Context.currentPos(),
+            name:'addChild',
+            kind:FFun({
+                args:[{name:'child', type:children_type}],
+                expr: macro this.addChild(child),
+                ret:null
+            })
+        });
 
         var def:TypeDefinition = {
             pos: Context.currentPos(),
             name:makeTypeName(c.name, "instance"+(mangle_name==""?"":'_$mangle_name')),
             pack:[],
             doc:c.guid,
-            kind:TDAbstract(macro:thinglib.component.Entity),
+            kind:abstractOverEntity,
             fields:fields,
             meta:[
-                {name:':forward', params: [macro name], pos:Context.currentPos()}
+                {name:':forward', params: [macro name, macro parent, macro removeChild], pos:Context.currentPos()}
             ],
         }
         
@@ -493,6 +512,32 @@ class Codegen{
     static function generatePropertyAccessorFields(definition:PropertyDef):Array<Field>{
 
         var fields:Array<Field> = [];
+        var constraint = macro:thinglib.component.Entity;
+        if(definition.ref_base_type_guid!=Reference.EMPTY_ID){
+            var basetype:Thing = definition.reference.getRoot().unsafeGet(definition.ref_base_type_guid);
+            if(basetype==null){
+                cglog.warn('Unable to find constraint ${definition.ref_base_type_guid} for $definition.');
+            }
+            else{
+                if(basetype.thingType==ENTITY){
+                    constraint = TPath({
+                        pack: ['things'],
+                        name: 'Constructs',
+                        sub: makeTypeName(basetype.name)+"_instance"
+                    });
+                }
+                else if(basetype.thingType==COMPONENT){
+                    constraint = TPath({
+                        pack: ['things'],
+                        name: 'Components',
+                        sub: makeTypeName(basetype.name)
+                    });
+                }
+                else{
+                    cglog.warn('$basetype is not a valid constraint for $definition.');
+                }
+            }
+        }
         fields.push({
             pos:Context.currentPos(),
             doc:definition.documentation,
@@ -506,15 +551,15 @@ class Codegen{
                     case SELECT: TPath({
                         pack: ['things'],
                         name: 'Components',
-                        sub: makeTypeName(definition.name)+"_values"
+                        sub: makeTypeName('${definition.component.name}_${definition.name}')+"_values"
                     });
                     case MULTI: TPath({pack: [], params: [TPType(TPath({
                         pack: ['things'],
                         name: 'Components',
-                        sub: makeTypeName(definition.name)+"_values"
+                        sub: makeTypeName('${definition.component.name}_${definition.name}')+"_values"
                     }))], name: 'Array'});
-                    case REF: macro:thinglib.component.Entity;//TODO?
-                    case REFS: macro:Array<thinglib.component.Entity>;//TODO?
+                    case REF: constraint;
+                    case REFS: TPath({pack: [], params: [TPType(constraint)], name: 'Array'});//TODO?
                     case URI: macro:String; //TODO
                     case BLANK: macro:Null<Any>;
                     case UNKNOWN: macro:Null<Any>;
@@ -557,7 +602,7 @@ class Codegen{
                     case COLOR: macro $b{[macro this.setValueByGUID($v{definition.guid}, COLOR(value)), macro return value]};
                     case SELECT: macro $b{[macro this.setValueByGUID($v{definition.guid}, SELECT(value)), macro return value]};//todo
                     case MULTI: macro $b{[macro this.setValueByGUID($v{definition.guid}, MULTI(value)), macro return value]}; //todo
-                    case REF: macro $b{[macro this.setValueByGUID($v{definition.guid}, REF(value.guid)), macro return value]};
+                    case REF: macro $b{[macro this.setValueByGUID($v{definition.guid}, REF(cast(value,thinglib.component.Entity).guid)), macro return value]};
                     case REFS: macro $b{[macro this.setValueByGUID($v{definition.guid}, REFS(value.map(v->v.guid))), macro return value]};
                     case URI: macro $b{[macro this.setValueByGUID($v{definition.guid}, URI(value)), macro return value]}; //todo
                     case BLANK: macro return null;
@@ -593,9 +638,8 @@ class Codegen{
         return fields;
     }
 // #endregion
-#end
 
-#if (macro||display||eval)
+// #if (macro||display||eval)
 // #region System builder
     public static function buildSystem(){
         var fields = Context.getBuildFields();
@@ -730,7 +774,8 @@ class Codegen{
                                 ret:null
                             }),
                             meta:[
-                                {name:':from', pos:Context.currentPos()}
+                                {name:':from', pos:Context.currentPos()},
+                                // {name:':forward', params: [macro parent], pos:Context.currentPos()}
                             ],
                             access:[AStatic],
                             pos:Context.currentPos()
@@ -744,14 +789,14 @@ class Codegen{
                             pos:Context.currentPos(),
                             pack:[],
                             name:makeTypeName(fieldname, 'accessor'),
-                            kind:TDAbstract(macro:thinglib.component.Entity, null, [macro:thinglib.component.Entity], [macro:thinglib.component.Entity]),
+                            kind:abstractOverEntity,
                             fields:lfields
                         };
                         cglog.info(new Printer().printTypeDefinition(localtype));
                         Context.defineType(localtype, Context.getLocalModule());
                         var ctype = Context.getType(makeTypeName(fieldname, 'accessor')).toComplexType();
                         var atype:ComplexType = TPath({pack:[], pos:Context.currentPos(), params:[TPType(ctype)], name:"Array"});
-                        // var ctype:ComplexType = TPath({pack: [], pos:Context.currentPos(), params: [TPType(TPath(
+                        // var ctype:ComplexType = TPath({pack: [], pos:Context.currentPos(), params: [TinstancesOfPType(TPath(
                         //     {
                         //         pack: ['things'], 
                         //         pos: Context.currentPos(),
