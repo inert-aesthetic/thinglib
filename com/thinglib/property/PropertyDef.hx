@@ -43,16 +43,31 @@ class PropertyDef extends Thing{
             name: name,
             guid: guid,
             default_value:SerializeValue(default_value),
-            min: SerializeValue(minimum_value),
-            max: SerializeValue(maximum_value),
-            step: SerializeValue(step_size),
             type: type,
-            extra: extra_data,
-            documentation: documentation,
-            options: options,
-            timeline_controllable: timeline_controllable
         };
-        if(ref_base_type_guid != Reference.EMPTY_ID){
+        if(minimum_value!=null){
+            ret.min = SerializeValue(minimum_value);
+        }
+        if(maximum_value!=null){
+            ret.max = SerializeValue(maximum_value);
+        }
+        if(step_size!=null){
+            ret.step = SerializeValue(step_size);
+        }
+        if(extra_data!=null){
+            ret.extra=extra_data;
+        }
+        if(documentation!=null){
+            ret.documentation=documentation;
+        }
+        if(options!=null){
+            ret.options = options;
+
+        }
+        if(!timeline_controllable){
+            ret.timeline_controllable = timeline_controllable;
+        }
+        if(ref_base_type_guid != null && ref_base_type_guid != Reference.EMPTY_ID){
             ret.ref_base_type = ref_base_type_guid;
         }
         return ret;
@@ -128,6 +143,7 @@ class PropertyDef extends Thing{
     public function defaultValString():String{
         switch(default_value){
             case STRING(v): return v;
+            case URI(v): return v;
             default: return "";
         }
     }
@@ -160,6 +176,7 @@ class PropertyDef extends Thing{
             case MULTI: MULTI([]);
             case REF: REF(Reference.EMPTY_ID);
             case REFS: REFS([]);
+            case URI: URI("");
             case BLANK: BLANK;
             default: BLANK;
         }
@@ -218,12 +235,24 @@ class PropertyDef extends Thing{
         if(p.default_value!=null){
             this._default_value = DeserializeValue(p.default_value);
         }
-        this.minimum_value = DeserializeValue(p.min);
-        this.maximum_value = DeserializeValue(p.max);
-        this.step_size = DeserializeValue(p.step);
-        this.extra_data = p.extra;
-        this.documentation = p.documentation;
-        this.options = p.options;
+        if(p.min!=null){
+            this.minimum_value = DeserializeValue(p.min);
+        }
+        if(p.max!=null){
+            this.maximum_value = DeserializeValue(p.max);
+        }
+        if(p.step!=null){
+            this.step_size = DeserializeValue(p.step);
+        }
+        if(p.extra!=null){
+            this.extra_data = p.extra;
+        }
+        if(p.documentation!=null){
+            this.documentation = p.documentation;
+        }
+        if(p.options!=null){
+            this.options = p.options;
+        }
         this.ref_base_type_guid = p.ref_base_type??Reference.EMPTY_ID;
         this.timeline_controllable = p.timeline_controllable??true;
         setReference(PROPERTYDEF(this), parent);
