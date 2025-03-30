@@ -20,7 +20,7 @@ class PropertyDef extends Thing{
     public var default_value(get, set):PropertyValue; 
     public var maximum_value:PropertyValue;
     public var minimum_value:PropertyValue;
-    public var options:Array<String>;
+    public var options:Map<Int, String>;
     public var step_size:PropertyValue;
     public var ref_base_type_guid:ThingID;
     public var extra_data:String;
@@ -61,7 +61,7 @@ class PropertyDef extends Thing{
             ret.documentation=documentation;
         }
         if(options!=null){
-            ret.options = options;
+            ret.options = [for(value=>name in options){{name:name, value:value}}];
 
         }
         if(!timeline_controllable){
@@ -251,7 +251,10 @@ class PropertyDef extends Thing{
             this.documentation = p.documentation;
         }
         if(p.options!=null){
-            this.options = p.options;
+            this.options = new Map();
+            for(o in p.options){
+                this.options.set(o.value, o.name);
+            }
         }
         this.ref_base_type_guid = p.ref_base_type??Reference.EMPTY_ID;
         this.timeline_controllable = p.timeline_controllable??true;
@@ -320,3 +323,5 @@ enum abstract PropertyType(String) to String{
         return [INT, FLOAT, STRING, BOOL, COLOR, SELECT, MULTI, REF, REFS, URI];
     }
 }
+
+typedef SerializedPropertyOption = {name:String, value:Int};

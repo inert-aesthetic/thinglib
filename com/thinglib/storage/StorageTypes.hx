@@ -1,5 +1,6 @@
 package thinglib.storage;
 
+import thinglib.property.PropertyDef.SerializedPropertyOption;
 import thinglib.timeline.Timeline.SerializedTimeline;
 import thinglib.Util.ThingID;
 import thinglib.storage.Reference.ReferenceType;
@@ -47,7 +48,7 @@ typedef SerializedPropertyDef = {
     type:String, 
     ?extra:String, 
     ?documentation:String,
-    ?options:Array<String>,
+    ?options:Array<SerializedPropertyOption>,
     ?timeline_controllable:Bool
 };
 typedef SerializedComponent = {

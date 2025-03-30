@@ -30,7 +30,25 @@ class TLTest extends SingleSuite{
             var root = new ThingScape();
             var propdeflist = new Component(root, "tests");
             PropertyType.createAll().iter(t->{
-                propdeflist.definitions.push(new PropertyDef(propdeflist, '${t}_test', t));
+                var newProp = new PropertyDef(propdeflist, '${t}_test', t);
+                propdeflist.definitions.push(newProp);
+                switch t {
+                    case INT:
+                    case FLOAT:
+                    case STRING:
+                    case BOOL:
+                    case COLOR:
+                    case SELECT, MULTI:
+                        newProp.options=new Map();
+                        newProp.options.set(0, "foo");
+                        newProp.options.set(1, "bar");
+                        newProp.options.set(2, "baz");
+                    case REF:
+                    case REFS:
+                    case URI:
+                    case BLANK:
+                    case UNKNOWN:
+                }
             });
             storage.save(propdeflist.filename, propdeflist);
             var construct = new Entity(root, "test");
@@ -69,9 +87,6 @@ class TLTest extends SingleSuite{
                     case REF: REF(construct.children[0].guid);
                     case REFS: REFS([construct.children[1].guid, construct.children[2].guid]);
                     case URI: URI("../res/dummy.png");
-                    //case VECT: VECT(new Vect(3.14, 42));
-                    //case VECTS: VECTS([new Vect(1, 2.3), new Vect(59999, 123.456789)]);
-                    //case RECT: RECT(new Vect(1, 2), 3, 4);
                     case BLANK: BLANK;
                     case UNKNOWN: NONE;
                 });
