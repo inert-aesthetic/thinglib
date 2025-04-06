@@ -5,6 +5,7 @@
 -lib uuid
 -lib haxe-strings
 -lib logger
+-lib hxsignal
 -hl out/hl/tltest.hl
 -main TLTest
 -debug

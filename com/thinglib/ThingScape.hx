@@ -1,5 +1,7 @@
 package thinglib;
 
+import thinglib.Signals.entityUnregistered;
+import thinglib.Signals.entityRegistered;
 import thinglib.timeline.Timeline;
 import uuid.Uuid;
 import thinglib.Util.ThingID;
@@ -39,14 +41,16 @@ class ThingScape extends Thing{
                 Util.log.error('Tried to register existing $thing.');
             }
         }
-        things.set(thing.guid, switch thing.thingType {
+        var refval:ReferenceValue = switch thing.thingType {
             case ENTITY: ENTITY(cast thing);
             case PROPERTYDEF: PROPERTYDEF(cast thing);
             case COMPONENT: COMPONENT(cast thing);
             case TIMELINE: TIMELINE(cast thing);
             case ROOT: null;
             case UNKNOWN: null;
-        });
+        };
+        things.set(thing.guid, refval);
+        entityRegistered.emit(this, thing.guid, refval);
     }
 
     public function resolveDependency<T:Thing>(parent:IHasReference, dependency:Dependency, storage:Storage):T{
@@ -147,7 +151,15 @@ class ThingScape extends Thing{
         return val;
     }
 
-    public function removeThing(thing:Thing, ?guid:ThingID){
-        things.remove(guid??thing.guid);
+    public function removeThing(thing:Thing){
+        var target = things.get(thing.guid);
+        if(target==null){
+            Util.log.warn('Tried to remove ${thing}, but it was already not there.');
+        }
+        else{
+            things.remove(thing.guid);
+            entityUnregistered.emit(this, thing.guid, target);
+        }
+
     }
 }

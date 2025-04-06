@@ -1,4 +1,5 @@
 package thinglib.component;
+import thinglib.Signals.propertyValueChanged;
 import thinglib.property.Property.PropertyValue;
 import haxe.ds.ArraySort;
 import thinglib.storage.StorageTypes.SerializedProperty;
@@ -116,6 +117,7 @@ class Entity extends Thing{
                         var exact = track.getKeyframe(frame);
                         if(exact!=null){
                             exact.value = track.offset==ABSOLUTE?value:value=value.subtract(getValueIgnoreTimeline(definition));
+                            propertyValueChanged.emit(this, definition, value);
                             return;
                         }
                         var prev = track.getPreviousKeyframe(frame);
@@ -123,6 +125,7 @@ class Entity extends Thing{
                         if(prev!=null){
                             if(next==null||next.keyframe.interpolation==NONE){
                                 prev.keyframe.value=track.offset==ABSOLUTE?value:value=value.subtract(getValueIgnoreTimeline(definition));
+                                propertyValueChanged.emit(this, definition, value);
                             }
                             return;
                         }
@@ -139,6 +142,7 @@ class Entity extends Thing{
             else{
                 property_values.set(definition.guid, value);
             }
+            propertyValueChanged.emit(this, definition, value);
         }
         else{
             trace('Tried to set $definition to $value on $this but component ${definition.component} not there.');
@@ -461,13 +465,12 @@ class Entity extends Thing{
         var d:SerializedEntity = data;
         var prefix = id_prefix!=null?'${id_prefix}:':'';
         this.guid = prefix+d.guid;
-        setReference(ENTITY(this), parent); 
-        
         this.name = d.name;
         this.dependencies = [];
         this.overrides = [];
         this.components = [];
         this.property_values = [];
+        setReference(ENTITY(this), parent); 
         var root = this.getRoot();
         if(d.dependencies!=null){
             for(dep in d.dependencies){
