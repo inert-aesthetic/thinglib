@@ -1,11 +1,6 @@
-# thinglib
+### MOVED TO CODEBERG !!
+https://codeberg.org/inert_aesthetic/thinglib
+https://codeberg.org/inert_aesthetic/thinglib
+https://codeberg.org/inert_aesthetic/thinglib
 
-Backend library for making things.
-Breaking changes with no changelog.
-
-Requires pasta-physic.
-```
-haxelib git pasta-physic https://github.com/inert-aesthetic/pasta-physic.git
-```
-
-To run tests, haxe-strings, buddy and utest are also required.
+This is not the place to be.
